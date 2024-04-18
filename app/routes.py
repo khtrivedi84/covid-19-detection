@@ -13,7 +13,7 @@ import re
 import datetime
 import openai
 
-openai.api_key = "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"
+openai.api_key = ""
 
 
 @app.route("/")
