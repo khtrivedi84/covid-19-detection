@@ -1,0 +1,30 @@
+{% extends "master.html" %}
+{% block content %}
+
+<section class="bg-image">
+    <div class="container mt-5">
+        <h1 style="color:white">Ask AI</h1>
+        <div id="welcome-text">
+            <h1 class="display-3">How are you feeling today?</h1>
+            <p class="lead mb-0">Let me know how you are feeling and I'll give the best possible AI generated advice :)</p>
+          </div>
+        <div class="chat-box mt-3" id="response-container">
+          {{advice}}
+        </div>
+        <form action="/api/askai?current_image={{current_image_path}}" method="post" id="askaiform" enctype="multipart/form-data">
+        <input type="text" hidden name="csrf_token" value="{{ csrf_token() }}">
+        {% if advice %}
+        <a class="btn btn-primary" href="/chat?image_paths={{current_image}}">Ask another question!</a>
+        {% else %}
+        <div class="form-group mt-5">
+            {{ form.text(class="form-control", id="message-input", placeholder="Type your message here") }}
+            <!-- <textarea class="form-control" rows="3" placeholder="Type your message here" id="message-input"></textarea> -->
+        </div>
+        <button type="submit" class="btn btn-primary mt-3" id="send-btn">Send</button>
+        {% endif %}
+        </form>
+      </div>
+</section>
+
+
+{% endblock %}

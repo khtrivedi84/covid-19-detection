@@ -1,0 +1,248 @@
+{% extends "master.html" %}
+{% block content %}
+
+<section class="bg-image">
+    <div class="container">
+        <div class="row justify-content-center">
+          <div class="row mt-2 justify-content-center">
+            <div style="border: 1px solid #0d6efd;border-radius: 30px 30px 30px 30px !important; width: fit-content;" class="col-md-12 text-center mt-4 p-2">
+              <button type="button" id="upload_section" style="border-radius: 30px 30px 30px 30px !important; width:200px;" class="btn btn-warning mx-3" onclick="showUploadContent()"><span style="margin-right: 10%;"><i class="fa-solid fa-upload"></i></span>Upload</button>
+              <button type="button" id="history_section" style="border-radius: 30px 30px 30px 30px !important; width:200px" class="btn btn-primary mx-3" onclick="showHistoryContent()"><span style="margin-right: 10%;"><i class="fa-solid fa-clock-rotate-left"></i></span>History</button>
+            </div>
+          </div>
+            <div class="col-md-12">
+              <div id="uploadContent">
+                <!-- Content for "Upload" button goes here -->
+                <div class="text-center py-5 mt-5">
+                  <div class="scanning-animation">
+                    <div id="loading-animation" style="display: none;">
+                      <div class="row justify-content-center">
+                      <div class="col-6 col-md-2">
+                        <div class="scan text-center" >
+                            <div class="hand ">
+                                <div class="lines">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                {% if result %}
+                  {% if result == "Positive" %}
+                      <div class="alert alert-danger" role="alert">
+                          The result is Positive.
+                      </div>
+                  {% elif result == "Negative" %}
+                      <div class="alert alert-success" role="alert">
+                          The result is Negative.
+                      </div>
+                  {% endif %}
+                  {% set length = image_paths|length %}
+                  {% set length = length-1 %}
+                      {% if image_paths %}
+                        <div class="row justify-content-center my-3">
+                          <div class="col-md-6">
+                            <img style="min-height: 400px; min-width: 500px;" src="{{ url_for('static', filename=image_paths[length]) }}" class="img-fluid rounded-start" alt="...">
+                            <div class="row justify-content-center mt-4">
+                              <div class="col-md-6">
+                                <a href="/chat?image_paths=app/static/{{image_paths[length]}}" class="btn btn-primary">Ask Questions or Tips to AI<span class="mx-3"><i class="fa-solid fa-arrow-right"></i></span></a>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6" id="typing-container">
+                            <span class="lead" id="typed-text"></span><span id="cursor">|</span>
+                          </div>
+                        </div>
+                      {% endif %}
+                {% else %}
+                  <div id="welcome-text">
+                    <h1 class="display-3">Welcome to the Dashboard</h1>
+                    <p class="lead mb-0">Upload the Chest CT image to get the results.</p>
+                  </div>
+                {% endif %}
+                </div>
+              </div>
+              </div>
+              <div id="historyContent" style="display: none;">
+                <!-- Content for "History" button goes here -->
+                <div class="text-center py-5 mt-5">
+                  
+                {% set length = image_paths|length %}
+                {% if image_paths %}
+                  {% for i in range(length-1,-1,-1) %}
+                  <div class="card mb-3">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <img src="{{ url_for('static', filename=image_paths[i]) }}" class="img-fluid rounded-start" alt="...">
+                      </div>
+                      <div class="col-md-8">
+                        <div class="card-body">
+                          {% if image_results[i] == "Positive" %}
+                          <p style="float: left !important;" class="alert alert-danger"><strong>Result:</strong> {{image_results[i]}}</p>
+                          {% else %}
+                          <p style="float: left !important;" class="alert alert-success"><strong>Result:</strong> {{image_results[i]}}</p>
+                          {% endif %}
+                          <p style="float: right !important;" class="alert alert-primary"><small class=""><strong>Date: </strong>{{dates[i]}}</small></p>
+                        </div>
+                        <hr>
+                        <br>
+                        <hr>
+                        {% if gptResponses %}
+                        <p style="right: 0 !important;" class=""><strong>AI's Analysis:</strong> {{gptResponses[i]}}</p>
+                        <p><a href="/chat?image_paths=app/static/{{image_paths[i]}}" class="btn btn-primary btn-sm">Ask Questions or Tips to AI<span class="mx-3"><i class="fa-solid fa-arrow-right"></i></span></a></p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  {% endfor %}
+
+                  {% else %}
+
+                    <p class="lead ">You have not uploaded any images yet. Click on the Upload button to upload the image and get the results.</p>
+
+                {% endif %}
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+          </div>
+            <form id="uploadForm" action="{{ url_for('image_processing') }}" method="post" enctype="multipart/form-data" onsubmit="showLoadingAnimation()">
+                <input type="text" hidden name="csrf_token" value="{{ csrf_token() }}"> 
+                <div class="form-group">
+                    <br>
+                    {{ form.file(class="form-control form-control-lg", id="formFileLg") }}
+                    <!-- <input class="form-control form-control-lg" id="formFileLg" type="file"> -->
+                </div>
+                <div class="text-center"> <!-- Add this div with the "text-center" class -->
+                  {{ form.submit(class="btn btn-primary mt-4 mb-4") }}
+                </div>
+            </form>
+        </div>
+        <br>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-12 text-center">
+                  <h3>F A Q s</h3>
+                  <Hr>
+              <div class="accordion accordion-flush" id="accordionFlushExample">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="flush-headingOne">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                        How much time would it take to get the results?
+                      </button>
+                    </h2>
+                    <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                      <div class="accordion-body">In most cases it is instant, but in rare case it might take upto 1 minute.</div>
+                    </div>
+                  </div>
+                  <br>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="flush-headingTwo">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                        Who check the images and give the COVID-19 results?
+                      </button>
+                    </h2>
+                    <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                      <div class="accordion-body">The image is processed using artifical intelligence techniques.</div>
+                    </div>
+                  </div>
+                  <br>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="flush-headingThree">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                        Are results always correct?
+                      </button>
+                    </h2>
+                    <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                      <div class="accordion-body">The system is proved to be accurate multiple times, however, it is always recommended to get yourself tested by a real doctor. These results can be used as a precautionary measure.</div>
+                  </div>
+                  <hr>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="flush-headingFour">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseFour" aria-expanded="false" aria-controls="flush-collapseFour">
+                        Can I upload multiple reports?
+                      </button>
+                    </h2>
+                    <div id="flush-collapseFour" class="accordion-collapse collapse" aria-labelledby="flush-headingFour" data-bs-parent="#accordionFlushExample">
+                      <div class="accordion-body">Yes, you can upload multiple reports, however, it is recommended to be quarantined for at least 14 days before you get yourself tested again.</div>
+                  </div>
+                  <hr>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="flush-headingFive">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseFive" aria-expanded="false" aria-controls="flush-collapseFive">
+                        Would I get results for a malaria/dengue report?
+                      </button>
+                    </h2>
+                    <div id="flush-collapseFive" class="accordion-collapse collapse" aria-labelledby="flush-headingFive" data-bs-parent="#accordionFlushExample">
+                      <div class="accordion-body">The system is trained only for COVID reports and it is strongly advised to not use it for any other disease as it may generate incorrect results leading to severe issues.</div>
+                  </div>
+                </div>
+                <br>
+              </div>
+            </div>
+        </div>
+        <!-- <div class="row justify-content-center">
+            <div class="col-6 col-md-3">
+                <div class="scan text-center" >
+                    <div class="hand ">
+                        <div class="lines">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+    </div>
+</section>
+
+<!-- Script for the typing animation -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Response</title>
+</head>
+<body>
+    <div id="typed-text"></div>
+    <span id="cursor">|</span>
+
+    <script>
+        function decodeHTML(html) {
+            const parser = new DOMParser();
+            const decodedText = parser.parseFromString(html, 'text/html').body.textContent;
+            return decodedText;
+        }
+
+        // Get the text passed from Flask using Jinja templating
+        const textToType = "{{ some_text }}"; // Use the text passed from Flask here
+        const typingSpeed = 10; // Adjust typing speed (milliseconds per character)
+        const decodedTextToType = decodeHTML(textToType);
+        console.log(decodedTextToType);
+        // const withNewlines = decodedTextToType.replace(/<br>/g, '\n');
+
+        function typeText() {
+            const typedTextElement = document.getElementById("typed-text");
+            const cursorElement = document.getElementById("cursor");
+            let i = 0;
+
+            function typeNextCharacter() {
+                if (i < decodedTextToType.length) {
+                    typedTextElement.textContent += decodedTextToType.charAt(i);
+                    i++;
+                    setTimeout(typeNextCharacter, typingSpeed);
+                } else {
+                    cursorElement.style.display = "none"; // Hide cursor when typing is done
+                }
+            }
+
+            typeNextCharacter();
+        }
+
+        // Start typing when the page is fully loaded
+        window.addEventListener("load", typeText);
+    </script>
+</body>
+</html>
+
+
+{% endblock %}
